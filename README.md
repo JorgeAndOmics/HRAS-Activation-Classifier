@@ -2,7 +2,7 @@
 # HRAS Activation Classifier
 
 
-HRAS Activation Classifier is a complete pipeline for the generation of a Random Forest model, capable of discriminating a given protein structure between its active or inactive status, based on homology with similar structures available in databases. It's part of the FMP of Omics Data Analysis in the University of VIC.
+HRAS Activation Classifier is a complete pipeline for the generation of a Random Forest model, capable of discriminating a given protein structure between its active or inactive status, based on homology with similar structures available in databases. It was first used to generate a classifier on Human HRAS, hence the name. It is part of the MFP of Omics Data Analysis in the University of VIC.
 
 ## Table of Contents
 
@@ -28,9 +28,9 @@ Activate the environment with:
     conda activate hras_classifier
 After this, we download the repository to run :
 
-git clone https://github.com/JorgeAndOmics/HRAS-Activation-Classifier
-cd HRAS-Activation-Classifier
-cd Pipeline
+    git clone https://github.com/JorgeAndOmics/HRAS-Activation-Classifier
+    cd HRAS-Activation-Classifier
+    cd Pipeline
 
 ## Usage
 
