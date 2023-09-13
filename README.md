@@ -36,14 +36,16 @@ After this, we download the repository to run :
 
 The HRAS Activation Classifier pipeline takes the following command line arguments:
 
-`--uniprot_code`: The Uniprot identifier of the desired protein
-`--identity_threshold `: The identity selection threshold for the retrieved structures 
-`--query_coverage_threshold`: The query coverage selection threshold for the retrieved structures
-`--active_ligands`: A comma-separated list of ligands that unequivocally identify a protein as active
-`--inactive_ligands`: A comma-separated list of ligands that unequivocally identify a protein as inactive
-`--gap_open_penalty`: Gap open penalty for the pairwise alignment
-`--gap_extend_penalty`: Gap extend penalty for the pairwise alignment
-`--seed`: The seed for the pseudo-random processes
+| Parameter                   | Description                                                                                       |
+|-----------------------------|---------------------------------------------------------------------------------------------------|
+| `--uniprot_code`            | The Uniprot identifier of the desired protein                                                     |
+| `--identity_threshold`      | The identity selection threshold for the retrieved structures                                     |
+| `--query_coverage_threshold`| The query coverage selection threshold for the retrieved structures                               |
+| `--active_ligands`          | A comma-separated list of ligands that unequivocally identify a protein as active                 |
+| `--inactive_ligands`        | A comma-separated list of ligands that unequivocally identify a protein as inactive               |
+| `--gap_open_penalty`        | Gap open penalty for the pairwise alignment                                                      |
+| `--gap_extend_penalty`      | Gap extend penalty for the pairwise alignment                                                    |
+| `--seed`                    | The seed for the pseudo-random processes                                                          |
 
 
 To run the script, open a terminal or command prompt, navigate to the downloaded directory  `HRAS-Activation-Classifier`  file, and enter the following command:
