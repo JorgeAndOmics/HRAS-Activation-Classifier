@@ -16,19 +16,22 @@ HRAS Activation Classifier is a complete pipeline for the generation of a Random
 
 To use this pipeline, you will need to have Python 3.8.
 
-Once you have Python installed, you have to install the WCN Standalone Library from Martin Floor repository [[Martin-Floor/WCN (github.com)](https://github.com/Martin-Floor/WCN)]. Please follow the instalation instructions in the repository, but do not create a custom environment just yet.
+Once you have Python installed, please download the repository with:
+    
+    git clone https://github.com/JorgeAndOmics/HRAS-Activation-Classifier
+    
+You have to install the WCN Standalone Library from Martin Floor repository [[Martin-Floor/WCN (github.com)](https://github.com/Martin-Floor/WCN)]. Please follow the instalation instructions in the repository, but do not create a custom environment just yet.
 
 After this, you will have to acquire a license for the Pyrosetta library [[PyRosetta - Licensing PyRosetta](https://www.pyrosetta.org/home/licensing-pyrosetta)]. Install as advised after this.
 
-Then, use the following command to create a custom environment. Use of Conda is advised for environment management:
+Then, with the .yaml file available in the Pipeline folder, use the following command to create a custom environment. Use of Conda is advised for environment management:
 
     conda env create -f hras_classifier.yaml
 Activate the environment with:
 
     conda activate hras_classifier
-After this, we download the repository to run :
+After this, we enter into the directory :
 
-    git clone https://github.com/JorgeAndOmics/HRAS-Activation-Classifier
     cd HRAS-Activation-Classifier
     cd Pipeline
 
