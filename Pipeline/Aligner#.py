@@ -1401,11 +1401,11 @@ def calculate_pdb_coordinates():
 if __name__ == '__main__':
     # DATA AND PREPROCESSING
     Datahub.directory_generator()
-    # Datahub.warning_silencer()
+    Datahub.warning_silencer()
     get_chain_ids(switch_blaster())
     get_pdb_files()
     chain_residue_parser()
-    # metadata_generator()
+    metadata_generator()
     sequence_adjuster()
     dataframe_generator()
     # dataframe_trimmer()
