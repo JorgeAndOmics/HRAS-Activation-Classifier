@@ -14,7 +14,7 @@ HRAS Activation Classifier is a complete pipeline for the generation of a Random
 
 ## Installation
 
-To use this pipeline, you will need to have Python 3.8.
+To use this pipeline, you will need to have Python 3.8., and the latest version of NextFlow installed (https://github.com/nextflow-io/nextflow) . 
 
 Once you have Python installed, please download the repository with:
     
@@ -99,4 +99,5 @@ and Computation, 7(2), 525–537. https://doi.org/10.1021/ct100578z .
 - Chaudhury, S., Lyskov, S., & Gray, J. J. (2010). PyRosetta: A script-based interface for implementing 
 molecular modeling algorithms using Rosetta. Bioinformatics, 26(5), 689–691. 
 https://doi.org/10.1093/bioinformatics/btq007
+- https://github.com/nextflow-io/nextflow
 - All structures used for training the model are available at the end of the preprocessing phase in the generated metadata file.
