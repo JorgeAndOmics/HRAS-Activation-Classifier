@@ -2,7 +2,7 @@ name: base
 channels:
   - https://conda.graylab.jhu.edu
   - Bioconda
-  - https://levinthal:paradox@conda.graylab.jhu.edu
+  - https://######:######@conda.graylab.jhu.edu
   - ambermd
   - conda-forge
   - defaults
