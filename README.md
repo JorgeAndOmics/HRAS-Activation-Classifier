@@ -24,7 +24,7 @@ You have to install the WCN Standalone Library from Martin Floor repository [[Ma
 
 After this, you will have to acquire a license for the Pyrosetta library [[PyRosetta - Licensing PyRosetta](https://www.pyrosetta.org/home/licensing-pyrosetta)]. Install as advised after this.
 
-Then, with the .yaml file available in the Pipeline folder, use the following command to create a custom environment. Use of Conda is advised for environment management:
+Then, with the .yaml file available in the Pipeline folder, modify it with your Pyrosetta credentials and use the following command to create a custom environment. Use of Conda is advised for environment management:
 
     conda env create -f hras_classifier.yaml
 Activate the environment with:
