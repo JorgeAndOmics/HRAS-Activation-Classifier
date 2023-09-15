@@ -92,7 +92,6 @@ If you would like to contribute to the HRAS Activation Classifier script, please
 This project is licensed under the terms of the MIT license. See the  `LICENSE`  file for more information.
 
 ## References
-All structures used for training the model are available at the end of the preprocessing phase in the generated metadata file.
 - Floor, M., WCN. GitHub. Retrieved 6 September 2023, from https://github.com/Martin-Floor/WCN 
 - Olsson, M. H. M., Søndergaard, C. R., Rostkowski, M., & Jensen, J. H. (2011). PROPKA3: Consistent 
 Treatment of Internal and Surface Residues in Empirical p K a Predictions. Journal of Chemical Theory 
