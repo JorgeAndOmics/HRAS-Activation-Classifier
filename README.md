@@ -14,7 +14,7 @@ HRAS Activation Classifier is a complete pipeline for the generation of a Random
 
 ## Installation
 
-To use this pipeline, you will need to have Python 3.8., and the latest version of NextFlow installed (https://github.com/nextflow-io/nextflow) . 
+To use this pipeline, you will need to have Python 3.10, and the latest version of NextFlow installed (https://github.com/nextflow-io/nextflow) . 
 
 Once you have Python installed, please download the repository with:
     
