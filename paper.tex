@@ -1,0 +1,460 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{HRAS Physical Feature Analysis: Predicting Protein Activation Through a Random Forest Classifier}
+\author{Jorge González-García}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Abstract}
+Over the past decade, increased computational capabilities have enabled us to address biological questions using data-driven methods, particularly where traditional techniques have been limiting. We hypothesize these computer-based methods can be used to predict enzyme activation status. To verify this claim, we have selected a benchmark protein for study, Human HRAS, sourcing a comprehensive set of experimentally labelled structures from available databases. Seven physical, computationally inexpensive features were extracted from these structures at the amino acid alpha carbon level and aligned to the canonical sequence to convey their metrics locally. Subsequently, three-dimensional tensors were generated with them from the set of all possible combinations of the obtained features. A random forest model was then trained on t-SNE preprocessed tensors to look for the highest performing combination of features. Our results strongly suggest that activation status in Human HRAS, and probably other proteins, is mainly codified in the electrostatic and Van der Waals forces, with solvation forces playing a lesser role. These forces, when processed through machine learning models, offer substantial predictive capability. In contrast, methods based on the physical three-dimensional position of residues, such as coordinate-based data and pairwise Root Mean Standard Deviation, were not independently effective in distinguishing activation states.
+
+\section{Introduction}
+In the last ten years we’ve been seeing an exponential growth of computational resources available for tackling biological problems previously thought only achievable through empirical methods. Since the publication of Alphafold by Deepmind in 2018 (Jumper et al., 2021), proving the solution to the folding problem through graph neural networks, the explosion of solutions to biological problems has escaped the confines of exclusive supercomputers and is achievable in low-end terminals. Besides, both enormous databases of molecular data and supercomputing time are readily available for marginally low costs, enabling solutions faster and more affordable than ever.
+The folding problem has been one of the philosopher stones of computational biology for decades. The solution space of transforming moderately sized proteins of a few hundreds of amino acids into their final three-dimensional conformation yielded numbers in the order of 10500 possibilities, completely outside the capacities of our most potent supercomputers to deal with. It was thought as well that we couldn’t achieve it until a sufficiently powerful quantum computer was developed, capable of simulating the complex interatomic forces that give proteins their shapes and functions. This cornerstone is yet many decades away.
+It would turn out we wouldn’t have to wait that long. The Critical Assessment of Structure Prediction (CASP14) competition of 2020 achieved unprecedented levels of accuracy in protein predictions and can be plausibly seen as the kickstart of the race to develop purely computational pipelines that could save much money and time.
+Perhaps one of the most fundamental questions one can ponder when studying almost any protein with enzymatic capacity is whether it is active or inactive. Activation status of a protein is a complex deal, mediated by post-translational modifications, subcellular location, environmental properties, allosteric molecules, feedback mechanisms and a myriad of other circumstances. In this regard, a purely brute-force computational approach to the simulation of a protein status is an intensive endeavor, not shy of the requirements the very folding problem would have had were not for the steps taken in machine learning and neural networks.
+A simpler approach to this problem could be not trying to tackle all the possibilities that can determine whether a protein is active or inactive based on atomic magnitudes, but whether some of the measurable properties of the structures are statistically associated to their activation. For example, we can hypothesize that closer, more compact structures are harder for substrates to access to, and perhaps over a large sample of similarly behaving molecules, a pattern can be detected that can be clearly associated with the catalytic capacity of the protein.
+In that regard, several properties of a figurative protein come to mind that have an instant association with the location of its constituent components in relation to one another and with the medium. These are relatively easily calculated through well-known computational methods, and perhaps within that high-dimensional photography of several metrics and coordinates there is a particular pattern that can unequivocally denote or not a protein as active. 
+In a preliminary unpublished work, the laboratory of Jordi Villà (Lingner et al., 2010) investigated the relevance of residue level solvation free energy values for the discrimination of active and inactive structures of Ras, as showed in Figure 1.1.
+They went for a probabilistic approach that did not conclude any statistically significant association, although preliminary results hint at the existence of two distinct conformational patterns separating the active and inactive structures. Other study can be tangentially associated to the goal of this one (Tahir \& Hayat, 2017), although their target was on more general protein-protein interactions (PPI). Their results are encouraging in this line of research.
+
+Considering the aforementioned factors, prior to employing machine learning techniques, it is advisable to ascertain whether traditional statistical methods cannot achieve comparable classification outcomes. The latter methods are notably more straightforward to implement.
+Considering our objective, we aim to investigate the feasibility of developing a machine-learning classifier that can interpret information from existing databases by analysing multiple physical properties of a benchmark protein. This classifier should reliably determine whether a specific protein is in its active or inactive state.
+Thus, the two main goals of the project are:
+\begin{itemize}
+    \item Demonstrating that a statistical method applied to the physical properties of our benchmark protein is insufficient to categorize its experimental structures into active and inactive forms.
+    \item Select and train a machine learning model based on physical feature metrics that can successfully predict with sufficient efficacy the activation status of our labelled dataset.
+
+    \item Successfully generating a computational pipeline that can automatically generate a model from existing available data.
+    \item Extract relevant physical-chemical features from existing data on our benchmark protein and study their predictive potential on activation status.
+    \item Label the retrieved data for activation status to train a supervised machine learning model.
+
+
+\end{itemize}
+
+
+\subsection{HRAS}
+
+The proposed model protein for this project is human HRAS (Uniprot Accession Code P01112). HRAS is a member of the RAS family, a great community of GTPases, which means it hydrolizes guanosine triphosphate (GTP) into guanosine diphosphate (GDP). RAS proteins function as molecular relays, transmitting signals from activated receptors. They switch between two states: an inactive state when bound to GDP and an active state when bound to GTP. In the active GTP-bound state, RAS can engage with and activate a variety of downstream proteins, leading to a spectrum of cellular responses, such as cell growth, survival, differentiation, and potential transformation into cancerous cells.
+
+The structures can be visualized in Figure 1.1 (Fetics et al., 2010). For more information on HRAS structural and functional characteristics, refer to Annex 1.
+
+HRAS is a well-studied protein with a critically important physiological function. That is the regulation of several intracellular signaling cascades. It interacts with several effector proteins, and have a role to play in cell proliferation, differentiation, and survival. Thus, it is a well conserved protein, because mutations that render it dysfunctional usually lead to lethality.
+
+\subsection{Features}
+
+\subsubsection{Weighted Contact Number}
+
+WCN has been shown to provide dynamical characterization of protein structures from the simple measurement of the distance between nodes (C-alpha, centroids, all atoms). Given a network with nodes \(i\) and \(j\), the Weighted Contact Number is defined as the sum of the inverse of the squares of all the distances between nodes \(i\) and \(j\).
+
+When the nodes we are using are, for example, C-alpha atoms in each amino acid residue, we can evaluate a residue-based WCN. It provides a practical way to featurize protein conformation at the residue level. A mutation that significantly alters the WCN of a residue might disrupt the protein’s stability or its capacity to undergo necessary structural shifts for its function, leading to inactivate or constituent states (Lin et al., 2008).
+
+WCN provides insights into the local environment of an amino acid residue by quantifying the distance to surrounding residues. It is a good measure of the “compactness” of each region, which according to our hypothesis, may critically determine the function of a particular structural region.
+
+\subsubsection{\(pKa\) of Ionizable Groups}
+
+The \(pKa\) of an amino acid residue indicates the \(pH\) at which it is half-protonated.
+
+Starting with the Henderson-Hasselbach equation (Bombarda \& Ullmann, 2010):
+
+Given the condition in which the residue is half protonated, both protonated and deprotonated forms are equal, we can arrange the equation so:
+
+Changes in protonation states can drastically affect the distribution of charges across the whole electronic domain of the protein, and thus its structure and function (Krusemark et al., 2009). 
+
+Many proteins operate at specific  values. Trying to consider all the possible environmental conditions that can influence a protein structure, or the critical role the surrounding medium’s  can have on its activation state, is precisely the kind of computational effort this project intends to avoid. The best way then to codify the behavior of those structures under different proton concentrations is to study the  to know the rate of dissociation of its residues.
+
+Many enzymes utilize acidic or basic residues as catalytic groups. In fact, only a fraction of the constituent amino acids in regular proteins account as ionizable groups that interact strongly with the surrounding medium as acids or alkalis. These “chemical hinges” can have a powerful effect on their surrounding distribution of electric charges, and a deep impact on the final conformation of the structure, its affinity to substrate and finally its activation state (Fossat et al., 2021).
+
+\subsubsection{Energetic Landscape}
+
+On a wide perspective, the process of protein folding is driven by energetic considerations (Haq et al., 2010). The native state of a protein is often its lowest energy state, be it on globally or in their multiple transient states (Sorokina et al., 2022). Deviations from this state, be it because of mutations, environmental interference, or PPI, can lead to protein misfolding or new conformations altogether, metastable or persistent. These alterations can usually be associated to pathological or constituent states, and thus to the activation status.
+
+This is critical in the case of HRAS as its function is heavily modulated by a multitude of effector proteins like GAP. Even when it’s not possible or convenient to model all the possible PPI participating in the metabolic cascades HRAS regulates, the total energy of its residues will probably contain a pattern characteristic of the interaction with other molecules. Its total energy metrics can provide insights into the stability of their interaction, the potential for allosteric regulation and the probability of transient or stable interactions.
+
+\subsubsection{Solvent Interactions}
+
+Solvation energies reflect how the residues interact with the protein’s solvent (usually water). Proteins consist of a mix of hydrophobic and hydrophilic residues. Their particular distribution of these in a protein’s surface and interior plays a crucial role in its folding and function (Tomar et al., 2016).
+
+This property in particular can provide clear insights into the degree of exposure or shielding of hydrophobic regions, indicating potential binding sites, allosteric sites or regions of structural importance.
+
+In conjunction with the coordinates-based WCN or the electric charge based pKa already mentioned, the solvation profile can give us not only the amount of shielding of a residue, but its predisposition to occupy lower or higher energy regions. For example, a residue with a high degree of hydrophobicity can still be relatively exposed to the surrounding medium due to the particular distribution of residues in the immediate area, but under a conformational shift can greatly modify its position to one more suited to its solvation value (Hudáky et al., 2001).
+
+\subsubsection{Molecular Interactions and Stability}
+
+Finally, to account for all possible sources of conformational shifts in a protein, we have to move to the electronic forces determining the attraction and repulsion between residues. In this study, the metrics that have been considered to account for the electronic component of intramolecular forces are electrostatic and Van der Waals.
+
+Electrostatic forces arise from interactions between charges groups. In proteins, these are often the side chains of amino acids with intrinsic charge like arginine, lysine, glutamate, or aspartate. For instance, an enzyme might stabilize a negatively charged transition state by positioning a positively charged residue nearby. In fact, the particular working mechanism of HRAS contains a single positive residue initializing the reaction, known as an “Arginine Finger”.
+
+Electrostatic potential provides insights into charge distribution on the protein’s surface. Charge-charge interactions play a pivotal role in ligand binding, PPI and general conformation shifts (Gallicchio \& Levy, 2011).
+
+Meanwhile, Van der Waals attractive and repulsive components reflect non-covalent interactions between atoms. This ubiquitous forces are quantum-mechanical in nature and arise from fluctuations in the electronic charge density (Hermann et al., 2017). Even though the forces mediated by these components are extremely weak, they can indicate shifts in the protein’s structure, particulary in the surface (Gao et al., 2015) (Hähl et al., 2012).
+
+\subsection{Statistical Discrimination}
+
+In order to determine if active and inactive structures can be discriminated by purely statistical mechanisms, we have used two clustering-based metrics:
+
+\subsubsection{Root Mean Standard Deviation (RMSD)}
+
+It is a widely used metric in homology analysis to quantify the similarity of two protein structures. It is defined as:
+
+in the two datasets being compared, where  is the number of datapoints, and  and are the coordinates of the \textsuperscript{th} datapoint.
+
+For all our complete training protein dataset, all samples were first superimposed to each other, and their RMSD value calculated. If the scalar divergence between all possible pairs of samples contains within itself the necessary discriminating information, we will be able to see a clustering pattern around the two categories.
+
+\subsubsection{Coordinate-based Clustering}
+
+As for the coordinate-based clustering, we can implement an algorithm that can be fed on the three-dimensional locations of the residues, and these processed by another clustering algorithm. If the divergence in the 3D coordinates of the atoms is significant enough and codifies the activation status of the proteins, we will see a clustering pattern around the two categories as well.
+
+\subsubsection{Classifier}
+
+Our selected method is Random Forest for the following reasons:
+
+\begin{itemize}
+    \item Accuracy. Random Forests often provide a very high accuracy, particularly on complex datasets with many features.
+
+    \item Feature Importance Discrimination. Random Forests provide insights into the importance of different features in making predictions.
+
+    \item Resilience to over and underfitting. Due to the averaging or majority voting system, Random Forests are less prone to overfitting than individual decision trees or other ML-based classifiers.
+
+    \item Large dataset handling. Random Forests can handle large datasets with high-level dimensionality, as well as a large number of input variables.
+
+    \item Outlier management: Random Forests are resilient to outliers. They can be used to detect and account for outliers in the dataset.
+\end{itemize}
+
+\section{METHODS}
+
+\subsection{Pipeline Execution}
+The pipeline is explained in full detailed in Annex 2, and the full code is available in the provided Github repository. Please refer to the Resources and Code Availability Section for the link to the repository.
+Data Acquisition: Four types of data were retrieved:
+ \begin{itemize}
+     \item Canonical sequence of human HRAS.
+     \item BLASTp query results using the canonical sequence.
+     \item PDB files from BLASTp output.
+     \item Metadata from the RCSB database. (See Annex 2 for retrieval specifics)
+ \end{itemize}
+ 
+Feature Extraction: Seven features were extracted via specific scripts:
+ \begin{itemize}
+     \item WCN using the WCN Standalone Library (Floor, n.d.)
+     \item pKa using the PropKa Library (Olsson et al., 2011)
+     \item Rosetta profiles using the Pyrosetta Library (Chaudhury et al., 2010).
+ \end{itemize}
+ 
+The features were globally aligned (BLOSUM62) to the amino acids of the canonical sequences and stored into dataframe objects.
+Data extraction: RMSD values were determined for all possible structure pairs, and alpha carbon coordinates were extracted from all selected structures. All possible combinations of feature dataframes were created using:
+
+
+\[C(n,k)=n!/k!(n-k)!\]
+
+
+Where \(n\) represents the total number of dataframes and \(k\) is a random number between 1 and 7. The operation yielded 127 distinct combinations.
+The dataframes within these combinations were stacked along the third dimension into 3D tensor objects, normalized using the Z-score method. Null values were handled through zero imputation.
+Dimensionality Reduction and Modelling: Tensors were flattened to 2D arrays and preprocessed with t-SNE of two components. Random forest models were trained on these arrays using a three-fold cross-validation and a hyperparameter grid search. The full details of the model training are available in Annex 2.
+\subsection{Analysis}
+Hierarchical clustering of RMSD values and a 3D PCA on alpha-carbon coordinates were conducted. Each dataframe metric was used to train separate random forest models, from which feature important residues were selected. A two-sample t-test was performed between active and inactive datasets from the 15 most important of these residues. Model training outputs were also stored and analysed. For the complete list of metrics obtained, consult Annex 2. 
+Detailed visuals and analyses are available in the Results section and in the 'Analysis' folder on the provided Github repository. Specific values obtained from the analysis are available in Annex 3.
+
+
+\section{RESULTS}
+
+\subsection{Statistical Analysis}
+
+Comprehensive statistical evaluations, including normalization, clustering, feature importance, and significance studies of the seven metrics, are accessible in the 'Analysis' subfolder of the associated Github repository.
+
+As we can observe in Figure 3.1. Clustering study of RMSD and coordinates for our samples does not yield any aggrupation pattern corresponding to the activation states of the dataset proteins. The PCA performed on the coordinates extracted from the .PDB files can be seen in Figure 3.2 and does not reveal any clustering pattern corresponding to the activation status.
+
+\subsection{Feature Importance and Discriminative Analysis}
+
+We can observe the impact each of the 15 most important amino acid residues has on random forest model generation for each of the analyzed metrics in Figure 3.3. The precise values are available in Annex 3. For these amino acids, the results of the two-sample t-test (alpha=0.05) reveals the following distribution in each metric:
+
+\subsubsection{\textbf{WCN Profile} (Refer to Figure 3.3 and Table A3.2):}
+
+Major positions in this profile align with vital HRAS regions. The Switch I region exhibited stark disparities between active and inactive structures, with residues T35 (p=3.01E-08) and D39 (p=0.03083573) showing pronounced differences. The Switch II region brought attention to residues G60 (p=1.00E-31) and Q61 (p=3.84E-09). Additionally, T35, G60, Q61, G10 (p=2.66E-05), G12 (p=2.83E-08), and G13 (p=0.00940391) varied structurally and functionally. Comprehensive structural characteristics of HRAS can be referenced in Section 1.1 and Annex 1.
+
+\subsubsection{\textbf{pKa Profile} (Refer to Figure 3.3 and Table A3.3):}
+
+This profile highlighted significant positions in the Switch I region, specifically Y32 (p=0.000181767) and D38 (p=0.000181767). The Switch II region revealed significance at R68 (p=0.000181767). Notably, Y32 is pivotal for HRAS's functional activity. Consult Section 1.1 and Annex 1 for an in-depth exploration.
+
+\subsubsection{\textbf{Total Energy Profile} (Refer to Figure 3.3 and Table A3.4):}
+
+The variations between the datasets means for analyzed positions were rather limited in this profile. We find very little significance in T35(p=0.04730029) in Switch I, and Y64(p=0.04730029) in Switch II. Refer to Section 1.1 and Annex 1 for HRAS structural characteristics.
+
+\subsubsection{\textbf{Solvation Profile} (Refer to Figure 3.3 and Table A3.5):}
+
+This profile elucidated significant variances among key HRAS residues. Residues D33 (p=2.24E-05), I36 (p=2.24E-12), and S39 (p=2.91E-06) in the Switch I region and R73 (p=0.00190848) in the Switch II region were of interest. Residues G10 (p=0.01283681), G12 (p=0.000105356), G13 (p=0.000105356), and C118 (p=2.91E-06) showcased structural and functional variations, with C118 being of unique significance in this profile. Further insights on HRAS are available in Section 1.1 and Annex 1.
+
+\subsubsection{\textbf{Electrostatic Force Profile} (Refer to Figure 3.3 and Table A3.6):}
+
+A notable distinction in mean values for amino acids between active and inactive structures emerged. Residues Y32 (p=0.041433874), D33 (p=2.19E-10), T35 (p=4.31E-09), E37 (p=0.000299298), and D38 (p=0.00136504) in the Switch I region, and G60 (p=0.000123179) and Q70 (p=0.000485045) in the Switch II region were highlighted. Refer to Section 1.1 and Annex 1 for further structural details.
+
+\subsubsection{\textbf{Van der Waals Attractive Force Profile} (Refer to Figure 3.3 and Table A3.7):}
+
+The profile underscored several significant disparities in the mean values. Residues Y32 (p=0.007392506), D33 (p=9.81E-14), T35 (p=0.000511909), I36 (p=0.000924024), and S39 (p=0.000459318) in the Switch I region demonstrated heavy significance. In the Switch II region, Y64 (p=4.38E-09) and M72 (p=2.06E-07) were of note. For an in-depth understanding of HRAS, refer to Section 1.1 and Annex 1.
+
+\subsubsection{\textbf{Van der Waals Repulsive Profile} (Refer to Figure 3.3 and Table A3.8):}
+
+Despite the T-test analyses indicating significance in many residues, FDR Correction impacted numerous p-values. Residues D33 (p=0.015590989) in the Switch I region and Y64 (p=0.00074742) in the Switch II region remained significant post-correction. For details on HRAS structure, refer to Section 1.1 and Annex 1.
+
+\subsection{Machine Learning Model Results}
+
+\subsubsection{ROCAUC and Accuracy Analysis}
+
+Insights into the distribution can be found in Annex 3, Table 3.9 and Table 3.10. Figures 3.4 and 3.5 offer visual depictions of the data. It should be highlighted that the models with the best ROCAUC scores consistently showcased the best performances in other metrics, as illustrated in Figure 3.5. 
+
+\textbf{
+\subsubsection{Log Loss Analysis}
+}
+
+For a detailed assessment, consult Figure 3.5 and Table A3.11. While top-performing models display slight variations when assessed using the log loss metric, the combination of both Van der Waals components emerges as the best performer. Interestingly, weak non-covalent forces remain predominant in terms of predictive capability. 
+\\\\
+
+\subsubsection{Cohen's Kappa (CK) and Matthew's Correlation Coefficient (MCC):}
+
+For visualization, see Figure 3.5. Both metrics confirm the top-scoring models. The exact values can be found in Annex A3, Table A3.12 and Table A3.13.
+
+ \textbf{
+\subsubsection{Feature Importance Distribution:}
+}
+
+To understand how importance is distributed across features for each of the top-performing models in terms of accuracy, refer to Figure 3.6.
+\\\\
+\subsubsection{Confusion Matrix Analysis}
+
+A detailed examination of the Confusion Matrix for the top five performing models is presented in Figure 3.16
+\\\\
+\subsection{Discussion}
+
+Coordinate-based analysis of the structures doesn’t reveal any clear clustering pattern related to enzymatic activation. However, the battery of testing metrics performed on the models seems strongly indicative of the capacity of physical properties of a protein to codify in them its activation status. Even though analysis of the features suggests statistical significance in the means of values comparing active and inactive structures, it’s more likely that machine learning and its superior pattern recognition capabilities are necessary to create a model that can make predictions based on the data.
+
+Several metrics show very strong statistical significance when comparing the means of values in the most important positions in most metrics analyzed. Significant differences in Switch I and Switch II are to be expected given the role of these zones in the regulation of HRAS functional cycle. 
+
+Of particular interest are Y32 and T35, both highly conserved across structures and critical in function. Y32 is very important in the stabilization of HRAS as it is only accessible upon GAP binding, and can lead to intrinsic GAP independent GTPase activity in mutant isoforms of HRAS (Ilter \& Sensoy, 2019), while T35 plays a role in the binding of GEFs and other downstream effectors. We also observe significant differences in G10, G12 and G13, all crucial for HRAS function. Finally, we find an interesting C118 significantly different between active and inactive datasets in the solvation profile, which might explain its role in activation prediction due to its role in GEF binding.
+
+As for the Random Forest model, we find accuracies up to 80\%. Interestingly, top performers seem to consistently have three features in common corresponding to weak molecular interactions (Electrostatic and Van der Waals), down to the best 10 performers.
+
+In the testing metrics of the models, we can very clearly observe a predominance of the weak forces as the most valuable metrics for the prediction of the activation status of proteins, followed by the solvation profile. While the winning model is the one trained on the exclusively Van der Waals forces tensor, we can observe at least one occurrence of the electrostatics or Van der Waals features in any of the best performers, across all metrics. We can also observe that the only occurrence of one of these forces not being the most impactful in model generation is when Van der Waals repulsive is in conjunction with the solvation profile, hinting to the possibility that solvation might be more influential in prediction than the Van der Waals repulsive force.
+
+That exactly the winning model would be the combination of the weakest forces is simultaneously surprising and a good indicator that they codify the most information about the conformational configuration of the structures leading to activated status.
+
+It's important to note that these weak non-covalent forces not only consistently lead to better prediction outcomes (ROCAUC, Accuracy, MCC, CK), but to greater resilience to stochastic artifacts of detection as well (Log loss).
+
+Our primary hypothesis for this phenomenon is that the Van der Waals and electrostatic forces predominantly, followed by solvation to a lesser extent, influence higher-level folding more than other analysis metrics combined. Furthermore, they may be more specifically associated with the events leading to activation.These forces may have a more predominant role in tertiary and quaternary structure determination. Simply said, the models could be capturing subtle configuration shifts indicative of the adaptation of the protein to allosteric ligands or the substrate itself.
+
+While total energies or pKa distributions can have a deeper impact on the complete configuration of the protein from its linear state, determining arrangement the location of each residue deep within or in the surface, these shifts are simply too broad to accurately represent the minimal conformational changes happening at the active site, in the switch regions or other allosteric sites where activators or the substrate join in.
+
+For example, while residue protonation plays a crucial role in protein folding and stability, this metric applied to the alpha carbon of the amino acids might not capture the nuanced changes associated with the very specific interactions that lead to activation or deactivation. In the medium, the intricate interplay between electrolytes and the ionization of polar groups collectively contribute to general enzyme function (Ou et al., 2016). However, this likely doesn't provide discernible patterns concerning ligand binding and active site topology.
+
+Moreover, both Van der Waals and electrostatic forces are sensitive enough to the local environment. They can quantify with great precision small interactions and movements in space; enough precision to be detected even through the masking effect other greater and more drastic forces exert on the configuration of the protein and thus in the model weights.
+
+One of the most potent sources of evidence for this hypothesis is the relative importance of each feature. In all weak forces analysis we find hard statistical significance on amino acids constituent or adjacent to function-critical regions of HRAS.
+
+That these forces act so predominantly as markers of activation can be attributed to two main factors:
+
+· Some authors have observed that while electrostatic and Van der Waals forces lead only to weak intermolecular shifts, their combined action is greatly intensified (Persson et al., 2009). In this study it is shown that both interactions can work in a cooperative way in order to optimize specific biochemical mechanisms. 
+
+ · Van der Waals and other non-covalent weak forces mainly influence surface processes, whereas other stronger forces, like solvation energies determine at a more fundamental level the structure and function of the protein. This, in turn, means that while greater forces acting at longer distances determine the folding phase solution, lighter forces operating outside the more compact, energy-dense interior are almost solely responsible for interactions with regulator molecules and the substrate itself. Particularly in the case of electrostatic interactions, evidence exists that the influence of surface charges on ion binding to proteins may be more common than generally supposed and could have important consequences for protein function (Linse et al., 1988).
+
+ Several works have shown that active site electrostatic preorganization can be linked to the instability of residues vital for catalysis. A notable investigation (Bonet et al., 2005) examined RAS/GAP complexes, identifying protein-protein interaction (PPI) "hotspots". These are specific regions on the HRAS exterior that undergo conformational alterations, positioning residues in an energetically advantageous alignment for interaction with residues on partner protein surfaces. Such findings underscore the significance of electrostatic and weak forces in modulating allosteric regulation and suggest their potential as predictors for protein activation status.
+
+\section{CONCLUSION}
+
+It can be concluded that clustering statistical analyses of the physical properties in enzyme structures fall short in predicting activation status on their own. However, these structures exhibit patterns linked to their activation status. Leveraging machine learning with feature analysis harnesses these patterns, enabling the creation of predictive classifiers. Notably, weak surface forces appear especially informative, capturing nuances like allosteric regulation and subtle conformational shifts at active sites.
+
+Utilizing existing databases, a classifier can be developed to predict catalytic activation status, leveraging data that can be inexpensively processed from available sources. While this computational approach offers a valuable layer of insight, enabling significant advancements in the understanding of proteins as molecular switches and facilitating the identification of pathological mutations leading to aberrant activity, it does not eliminate the need for experimental methods. Rather, it complements and streamlines the research process by providing an additional layer of information, making experimental endeavors more targeted and efficient.
+
+By integrating the innovations of Alphafold with contemporary machine learning strategies, the field is advancing towards enhanced precision in protein dynamics simulations. These computational advancements offer a refined understanding of protein behavior, for example in the context of protein mutations. It's evident that the confluence of technology and biology is shaping a promising trajectory for protein research.
+\par
+\section{Annex I. HRAS STRUCTURAL CHARACTERISTICS}
+
+There are three primary RAS genes which produce four closely related RAS proteins: NRAS, HRAS, and two splice variants of KRAS, KRAS4B and KRAS4A. While these proteins can interact with the same downstream partners due to having identical effector binding domains, their activities are not entirely redundant. Variations in their posttranslational modifications mean they follow different pathways within the cell and position themselves in specific regions of cell membranes. This positioning may grant them access to varied effector groups, leading to different signaling results. For example, research shows that the cancer-causing forms of HRAS are more efficient than NRAS or KRAS in altering fibroblast cells, but NRAS excels in transforming blood-forming cells. Supporting this, gene studies reveal unique roles: eliminating NRAS or HRAS individually or in tandem in mice yields mostly normal outcomes, but a KRAS deficiency is fatal during embryonic development.
+
+Approximately 30\% of human cancers, encompassing both solid tumors and blood-related cancers, have mutations linked to RAS genes. Intriguingly, specific RAS gene variants are more commonly associated with certain organ-specific cancers. For instance, KRAS mutations appear in almost 90\% of pancreatic cancers. In blood cell-related cancers, NRAS mutations are more prevalent than those in KRAS, while HRAS mutations are uncommon. The reasons for these varied mutation rates among RAS gene variants in blood cell-related cancers remain unclear (Parikh et al., 2007).
+
+The HRAS structure consists of two main parts: a highly conserved G-domain, which is similar across different isoforms and is essential for its GTPase function, and a highly variable region that determines its positioning on the cell membrane.
+
+HRAS oscillates between two conformational states: the GTP-bound active form and the GDP-bound quiescent form. The meticulous modulation of these biophysical transitions is fundamental to ensuring homeostatic cell signaling and is orchestrated by a set of regulatory proteins with high specificity.
+
+Central to this regulatory machinery are the Guanine Nucleotide Exchange Factors (GEFs), particularly the SOS (Son of Sevenless) proteins. These factors, through their Ras Exchange Motif(REM) and CDC25 domains, engage with HRAS in its GDP-associated form. The interaction causes steric hindrance, inducing a conformational alteration in the Switch I and Switch II regions of HRAS. This destabilizes the Mg\textsuperscript{2+} ion coordination, facilitating the egress of GDP. Subsequently, given the high intracellular concentration of GTP relative to GDP, GTP competitively binds to the nucleotide-binding pocket of HRAS, transmuting it into its active conformation.
+
+Conversely, GTPase-activating Proteins (GAPs), including the p120GAP and neurofibromin (NF1) isoforms, serve to attenuate HRAS signaling. By interacting with the Switch I and Switch II regions of GTP-bound HRAS, GAPs allosterically augment the GTP hydrolysis rate, a process that inherently is relatively slow. The provided catalytic asparagine residue from GAPs accelerates the nucleophilic attack on the gamma-phosphorus of GTP by a water molecule, engendering the rapid formation of GDP and inorganic phosphate (Pi). This shifts HRAS back to its quiescent state, truncating the signaling cascade (Herrero et al., 2020).
+
+Anomalies or aberrations in these regulatory processes can precipitate pathophysiological conditions, including oncogenesis, given the pivotal role of HRAS in multiple signaling pathways (Glennon et al., 2000).
+
+Its particular domain distribution is as follows (Downward, 2003; Gremer et al., 2010; Herrero et al., 2020; Ilter \& Sensoy, 2019; Rhett et al., 2020):
+
+\begin{itemize}
+    \item G-domain (GTPase domain):
+    \begin{itemize}
+        \item Comprises the majority of the HRAS protein (Residues 1 – 166).
+        
+        \item It is responsible for binding to GTP, GDP or analogous.
+        
+        \item Contains motifs essential for GPT binding and hydrolysis.
+        
+        \item Allows HRAS to switch between GTP or GDP bound states (Active or inactive)
+    \end{itemize}
+
+    \item Switch I and Switch II regions:
+
+    \item Flexible regions within the G-domain
+\end{itemize}
+
+\begin{itemize}
+    \item Switch I goes from residues 30 – 40, while Switch II goes from residues 60-76.
+\end{itemize}
+
+Undergo conformational changes upon GTP or GDP binding.
+
+§ These conformational changes determine the interactions with other effectors and regulators. For example, when HRAS is GTP-bound (active), Switches I and II adopt a conformation that allows the union of effector protein RAF.
+
+Hypervariable region (HVR):
+
+§ Located at the terminal C of the protein. It’s the part of the protein outside the G-domain.
+
+§ It’s the location that most differentiates the RAS isoforms (HRAS, KRAS, NRAS).
+
+§ Contains important post-translational modifications, such as farnesylation, which determines the membrane location of the protein.
+
+C-terminal CAAX motif: The “C” stands for cysteine, “A” for aliphatic amino acids and “X” for any amino acid. This motif is the site for the forementioned lipid modification that binds HRAS to the cell membrane, located at the terminal carbon of the protein.
+
+Linker region: Connects the G-domain to the HVR region between residues 86 and 104, although this can vary based on the whether HRAS is GTP-bound or not.
+
+ At the amino acid level, specific residues in HRAS have a vital role for its function. The most important are (Downward, 2003; Rhett et al., 2020):
+
+Glycine-10 (G10):
+
+· This residue is a part of the P-loop (phosphate-binding loop) and is involved in binding the phosphate groups of GDP/GTP.
+
+Glycine-12 and Glycine-13 (G12 and G13):
+
+· These residues are situated in the phosphate-binding loop (often referred to as the P-loop) of the G domain of HRAS. The P-loop plays a vital role in binding the phosphates of GDP and GTP.
+
+· Mutations on these residues can render HRAS constitutively active, leading to oncogenic signaling. These are common mutated residues in HRAS-associated tumoral processes.
+
+Tryptophan-28 (W28):
+
+· This residue plays a role in effector binding, helping in interaction with downstream partners.
+
+Valine-29 (V29):
+
+· Positioned close to the nucleotide binding pocket, this residue can affect nucleotide affinity and potentially influence the GDP/GTP-bound states of HRAS.
+
+Tyrosine-32 (Y32):
+
+· Located in the Switch I region.
+
+· It is important for the stabilization of the activate conformation of GTP-bound HRAS (active).
+
+Threonine-35 (T35):
+
+· Located in the Switch I region.
+
+· Important for effector interaction and the binding of downstream effectors like RAF.
+
+Glutamate-37 (E37):
+
+· A 2010 study found that duplication of E37 in the Switch I region impairs effector/GAP binding, and it is associated with increased GTP to GDP dissociation (Gremer et al., 2010).
+
+Glycine-60 and Glutamine-61 and Aspartate-119 (G60 ,Q61, D119):
+
+· Located in the Switch II region.
+
+· They play critical roles in GTP hydrolysis. 
+
+· Q61, in particular, is critical for catalysing GTP hydrolysis by stabilizing the transition state. Mutations at Q61 can hinder GTP hydrolysis, leading to HRAS persisting in its active form.
+
+· D119 plays a role in GTP hydrolysis, working in conjunction with Q61 to stabilize the transition state.
+
+· Mutations in them impair the intrinsic GTPase activity, and are also visible in neoplastic processes.
+
+Lysine-117 (K117):
+
+This lysine is involved in binding the $\gamma$-phosphate of GTP and plays a role in HRAS's intrinsic GTPase activity. Mutations here could affect the GTPase activity of the protein.
+
+Cysteine-118 (C118):
+
+§ Located away from the nucleotide binding site.
+
+It is important for the interaction with regulatory proteins like GEFs.
+
+\section{Annex II. COMPUTATIONAL PIPELINE}
+
+\subsection{Overall Function}
+
+The pipeline is designed to run from end-to-end on a single command. In order to generate the machine learning model, it first obtains from the internet the canonical sequence associated to the Uniprot accession code, as well as a large collection of protein structures via BLASTp query under the specified identity thresholds. The retrieved structures allow for the download of the whole .PDB files associated with them, which are programmatically trimmed to obtain the chain corresponding to the BLASTp hit. Subsequentally, several nested functions obtain relevant metadata from the structures and store them in a Pandas dataframe structure. The chains are then converted to new .PDB files, their sequences aligned to the canonical sequence previously stored, so each relevant metric is associated to its value in the alpha carbons of the experimental structures and aligned to their corresponding position in the canonical sequence. The data extracted for all these proteins at the alpha carbon level is:
+
+Weighted Contact Number (WCN)
+
+PropKa Profiles (PKa)
+
+Pyrosetta profiles for:
+
+§ Total Energy
+
+§ Solvation
+
+§ Electrostatic Potential
+
+§ Van der Waals Attractive Component (1)
+
+§ Van der Waals Repulsive Component (2)
+
+The script extracts several .CSV objects through the execution for statistical analysis and quality control, as well as logging all activity throughout the execution. The first goal of the script is the generation of seven dataframes, one for each of the metrics analyzed, whose rows correspond to the analyzed experimental structures, while the columns correspond to the position of the aminoacids in the canonical sequence (pe: Pos 1: M, Pos 2: T)
+
+These dataframes contain the values of each metric associated to each of the corresponding alfa carbons in the alignment. Therefore, different numerical parameters for the alignment yield different substitutions and gaps, modifying the results. The gaps are represented through NaN values.
+
+These dataframes are then inputted to the second script (Tensor\#.py), whose first task is the normalization and preparation of the raw metric data. The script performs a Z-score normalization of all values and performs a 0-input operation on all NaN values of the dataframes in preparation for the Random Forest analysis. 
+
+Then it proceeds to group all the normalized dataframes in all the possible permutations, stacking them across the third dimension to obtain the set of all possible 3D tensors where the first dimension contains the aminoacid positions, the second contains the experimental structures and the third a Pandas array of the normalized metrics for each amino acid. The operation results in the creation of 127 distinct tensors, going from 1 metric (original dataframes) to 7 metrics (the complete stacking of all metrics), identified by a unique code that distinguish the analysis contained in them. 
+
+The third script (RF\_model.py) has two functions. First, it compresses the 3D tensors into 2D structures using a feature importance statistical analysis tool (t-SNE), before initializing a Random Forest model and training it with the obtained structure. 
+
+The second is the training of the models, one for each tensor in the set. Hyperparameter selection is done programmatically using the Grid Search algorithm across a number of options for several distinct hyperparameters. The model is then trained using cross-validation with three folds on each of the 127 permutations of normalized metrics dataframes. The results are then stored for subsequent analysis and the execution of the pipeline stops.
+
+\subsection{Overall Structure}
+
+The pipeline consists of a string of three Python scripts with sequential instructions for retrieval, preprocessing and analysis of .PDB files obtained from the PDB database in order to train the most effective binary classifier through Random Forest modelling. 
+
+The scripts are orchestrated through the use of Nextflow, and callable from a single bash command specifying the analysis parameters. The required arguments for the execution of the pipeline are:
+
+· --uniprot\_code (Required)
+
+· --active\_ligands (Required)
+
+· --inactive\_ligands (Required)
+
+· --query\_coverage\_threshold (Default: 50)
+
+· --identity\_threshold (Default: 30)
+
+· --gap\_open\_penalty (Default: -0.2)
+
+· --gap\_extend\_penalty (Default: -0.2)
+
+· --seed (Default: 1)
+
+ It logs their own execution in runtime, on top of NextFlow responding to halting states and having its own log control during the execution. It will retry restarting three times after encountering a non-exceptionable problem before halting the process. 
+
+It also generates their own folders for storing of the analysis files. NextFlow ensures the assignment of execution permissions for the subsequent directories, subdirectories, and stored files, for which it is convenient to assign the script itself permissions under the sudoer group. The pipeline generates such folders in the same directory where it is located at the time of execution, generating absolute paths in the same directory address as the location of the NextFlow file, and given no permission problems, expands the directory structure downwards until the pipeline is completed and the execution halted.
+
+The pseudo-random number used for the reproducibility of the analysis is specified in the seed parameter supplied during the script call, and it is shared among all the scripts until the end of the execution. 
+
+All the files generate several .PKL (Pickle) files along the execution. Pickle files are binary storage files that store the result of particularly heavy or critical processes that would otherwise take significantly more time to process again and again throughout the execution of the pipeline. These are saved to the “pickles” folder after the analysis. Inside this one there is the “tensors” subdirectory, which stores the generated tensors from the permutations of all metrics dataframes.
+
+The retrieval of the .PDB files is done via an intermediary file type (.ENT), and stored in the “ent\_files” folder after the analysis. These contain all the retrieved files from the BLASTp query, but many of them remain without use after the filtering process.
+
+The resulting filtering yields the .PDB files trimmed to the chain corresponding to the hits in the BLASTp query, and are stored in the “full\_pdb\_files” folder.
+
+The metadata analysis includes a function for the generation of FASTA files from the selected chain .PDB files in order to perform phylogenetic tree analysis on them. These are stored in the “chain\_fasta\_files” folder after analysis.
+
+PropKa analysis generates its own files, necessary for the extraction of the  data. These files are stored in the “propk\_files” folder.
+
+Exception to this are the “pyrosetta\_pdb\_files” and “wcn\_full\_pdb\_files” folders, which contain the same .PDB files analyzed, but whose B-factor value is substituted at each alpha-carbon with the associated metric from the corresponding analysis, allowing the visualization of the given values through tools like UCSF Chimera.
+
+The “result\_dataframes” folder contains the several dataframes extracted along the analysis in .CSV format. These files are reported in Table 2.1.
+
+\end{document}
